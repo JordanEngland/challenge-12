@@ -156,3 +156,83 @@ function viewAllEmployees() {
     startEmployeeTracker();
   });
 }
+// Function to add a department
+function addDepartment() {
+  inquirer
+    .prompt({
+      name: 'name',
+      type: 'input',
+      message: 'Enter the name of the department:',
+      validate: (input) => {
+        if (input.trim() !== '') {
+          return true;
+        }
+        return 'Please enter a valid department name.';
+      },
+    })
+    .then((answer) => {
+      const query = 'INSERT INTO department SET ?';
+      connection.query(query, { name: answer.name }, (err, res) => {
+        if (err) throw err;
+        console.log(`\nDepartment '${answer.name}' added successfully.`);
+        startEmployeeTracker();
+      });
+    });
+}
+
+// Function to add a role
+function addRole() {
+  const query = 'SELECT * FROM department';
+  connection.query(query, (err, departments) => {
+    if (err) throw err;
+
+    inquirer
+      .prompt([
+        {
+          name: 'title',
+          type: 'input',
+          message: "Enter the role's title:",
+          validate: (input) => {
+            if (input.trim() !== '') {
+              return true;
+            }
+            return 'Please enter a valid role title.';
+          },
+        },
+        {
+          name: 'salary',
+          type: 'input',
+          message: "Enter the role's salary:",
+          validate: (input) => {
+            if (/^\d+(\.\d{1,2})?$/.test(input)) {
+              return true;
+            }
+            return 'Please enter a valid salary (numeric value).';
+          },
+        },
+        {
+          name: 'department',
+          type: 'list',
+          message: "Select the role's department:",
+          choices: departments.map((dept) => ({
+            name: dept.name,
+            value: dept.id,
+          })),
+        },
+      ])
+      .then((answer) => {
+        const role = {
+          title: answer.title,
+          salary: answer.salary,
+          department_id: answer.department,
+        };
+
+        const query = 'INSERT INTO role SET ?';
+        connection.query(query, role, (err, res) => {
+          if (err) throw err;
+          console.log(`\nRole '${answer.title}' added successfully.`);
+          startEmployeeTracker();
+        });
+      });
+  });
+}
